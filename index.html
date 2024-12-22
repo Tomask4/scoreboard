@@ -1,0 +1,246 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Team Scoreboard</title>
+    <style>
+        :root {
+            --font-family: 'Poppins', sans-serif;
+            --bg-color: #ffffff;
+            --text-color: #ffffff; /* Definieer één tekstkleur voor alles */
+            --team-border-radius: 15px;
+            --button-bg: #4caf50;
+            --button-bg-hover: #45a049;
+            --modal-bg: #f3f3f3;
+            --modal-shadow: rgba(0, 0, 0, 0.5);
+        }
+
+        @import url('https://fonts.googleapis.com/css2?family=Poppins:wght@400;600&display=swap');
+
+        body {
+            margin: 0;
+            font-family: var(--font-family);
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            height: 100vh;
+            overflow: hidden;
+            color: var(--text-color); /* Zet de tekstkleur hier in de body */
+        }
+
+        #scoreboard {
+            display: flex;
+            flex-wrap: wrap;
+            justify-content: center;
+            gap: 20px;
+            width: 90%;
+            max-width: 1200px;
+            max-height: 90vh;
+            overflow-y: auto;
+        }
+
+        .team {
+            flex: 1;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            color: var(--text-color); /* Gebruik de globale tekstkleur */
+            border-radius: var(--team-border-radius);
+            padding: 20px;
+            max-width: 300px;
+            box-shadow: 0 4px 10px rgba(0, 0, 0, 0.2);
+            min-width: 250px;
+        }
+
+        .team .score {
+            font-size: 4rem;
+            font-weight: 600;
+            margin: 20px 0;
+        }
+
+        .controls button {
+            font-size: 1.5rem;
+            margin: 5px;
+            padding: 10px 20px;
+            border: none;
+            border-radius: 8px;
+            background-color: var(--button-bg);
+            color: var(--bg-color);
+            cursor: pointer;
+            transition: background-color 0.3s ease;
+        }
+
+        .controls button:hover {
+            background-color: var(--button-bg-hover);
+        }
+
+        #settings {
+            display: none;
+            position: fixed;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            background: white;
+            color: #000000;
+            padding: 30px;
+            border-radius: 20px;
+            box-shadow: 0 4px 20px var(--modal-shadow);
+            z-index: 10;
+            max-width: 400px;
+            width: 90%;
+            max-height: 90%;
+            overflow-y: auto;
+        }
+
+        #settings input, #settings select {
+            width: calc(100% - 20px);
+            margin: 10px 0;
+            padding: 10px;
+            font-size: 1rem;
+            border: none;
+            border-radius: 8px;
+            background-color: #e0e0e0;
+            color: #000000;
+        }
+
+        #settings button {
+            font-size: 1rem;
+            padding: 10px;
+            background-color: var(--button-bg);
+            border: none;
+            border-radius: 8px;
+            color: var(--bg-color);
+            cursor: pointer;
+            transition: background-color 0.3s ease;
+            width: 100%;
+        }
+
+        #settings button:hover {
+            background-color: var(--button-bg-hover);
+        }
+
+        .settings-icon {
+            position: fixed;
+            top: 10px;
+            right: 10px;
+            font-size: 2rem;
+            cursor: pointer;
+            color: #000000;
+            z-index: 5;
+            transition: color 0.3s ease;
+        }
+
+        .settings-icon:hover {
+            color: #777;
+        }
+
+        .lbl {
+            visibility: hidden;
+        }
+    </style>
+</head>
+<body>
+    <div class="settings-icon" onclick="toggleSettings()">⚙</div>
+
+    <div id="settings">
+        <h2 style="text-align: center;">Settings</h2>
+        <label>Font Family: 
+            <select id="fontFamily">
+                <option value="Poppins, sans-serif" style="font-family: 'Poppins', sans-serif;">Poppins</option>
+                <option value="Arial, sans-serif" style="font-family: Arial, sans-serif;">Arial</option>
+                <option value="Courier New, monospace" style="font-family: 'Courier New', monospace;">Courier New</option>
+                <option value="Georgia, serif" style="font-family: Georgia, serif;">Georgia</option>
+                <option value="Times New Roman, serif" style="font-family: 'Times New Roman', serif;">Times New Roman</option>
+                <option value="Verdana, sans-serif" style="font-family: Verdana, sans-serif;">Verdana</option>
+            </select>
+        </label><br>
+        <label class="lbl">Background Color: <input type="color" id="bgColor" value="#ffffff"></label><br>
+        <label class="lbl">Text Color: <input type="color" id="textColor" value="#ffffff"></label><br>
+        <label>Label: <input id="textValue"></input></label>
+        <label>Number of Teams: <input type="number" id="numTeams" value="2" min="2"></label><br>
+        <div id="teamSettings"></div>
+        <button onclick="applySettings()">Apply</button>
+    </div>
+
+    <div id="scoreboard"></div>
+
+    <script>
+        let teams = [];
+
+        function toggleSettings() {
+            const settings = document.getElementById('settings');
+            settings.style.display = settings.style.display === 'block' ? 'none' : 'block';
+        }
+
+        function generateTeamSettings() {
+            const numTeams = parseInt(document.getElementById('numTeams').value, 10);
+            const teamSettings = document.getElementById('teamSettings');
+            teamSettings.innerHTML = '';
+
+            for (let i = 0; i < numTeams; i++) {
+                teamSettings.innerHTML += `
+                    <h3 style="margin-bottom: 5px;">Team ${i + 1}</h3>
+                    <label>Name: <input type="text" id="team${i}Name" value="Team ${i + 1}"></label><br>
+                    <label>Background Color: <input type="color" id="team${i}Color" value="#${Math.floor(Math.random()*16777215).toString(16).padStart(6, '0')}"></label><br>
+                `;
+            }
+        }
+
+        function applySettings() {
+            const fontFamily = document.getElementById('fontFamily').value;
+            const bgColor = document.getElementById('bgColor').value;
+            const textColor = document.getElementById('textColor').value;
+            const textValue = document.getElementById('textValue').value;
+            const numTeams = parseInt(document.getElementById('numTeams').value, 10);
+
+            document.documentElement.style.setProperty('--font-family', fontFamily);
+            document.documentElement.style.setProperty('--bg-color', bgColor);
+            document.documentElement.style.setProperty('--text-color', textColor);
+
+            const scoreboard = document.getElementById('scoreboard');
+            scoreboard.innerHTML = '';
+            teams = [];
+
+            for (let i = 0; i < numTeams; i++) {
+                const teamName = document.getElementById(`team${i}Name`).value;
+                const teamColor = document.getElementById(`team${i}Color`).value;
+
+                teams.push({ name: teamName, color: teamColor, score: 0, value: textValue });
+
+                const teamDiv = document.createElement('div');
+                teamDiv.className = 'team';
+                teamDiv.style.backgroundColor = teamColor;
+
+                teamDiv.innerHTML = `
+                    <div style="font-size: 1.5rem; font-weight: 600;">${teamName}</div>
+                    <div class="score" id="team${i}Score">0</div>
+                    <div id="team${i}Value" style="font-size: 1rem; font-style: italic;">${textValue}</div>
+                    <div class="controls">
+                        <button onclick="changeScore(${i}, 1)">+</button>
+                        <button onclick="changeScore(${i}, -1)">-</button>
+                    </div>
+                `;
+
+                scoreboard.appendChild(teamDiv);
+            }
+
+            toggleSettings();
+        }
+
+        function changeScore(teamIndex, delta) {
+            const team = teams[teamIndex];
+            team.score = Math.max(0, team.score + delta);
+
+            const scoreElement = document.getElementById(`team${teamIndex}Score`);
+            scoreElement.textContent = team.score;
+        }
+
+        document.getElementById('numTeams').addEventListener('input', generateTeamSettings);
+        generateTeamSettings();
+        applySettings();
+    </script>
+</body>
+</html>
